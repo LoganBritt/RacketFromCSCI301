@@ -8,7 +8,7 @@
 ;; Logan Britt
 ;; W01638650
 ;;
-;; Purpose
+;; Evalutes an expression including special symbols that take multiple parameters
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide lookup evaluate)
