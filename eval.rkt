@@ -14,23 +14,13 @@
 (provide lookup evaluate)
 (provide special-form? evaluate-special-form)
 
-
-(define add
-  (lambda (a b)
-    (cond ((number? a) (+ a b))
-          ((list? a) (append a b))
-          (else (error "unable to add" a b)))))
-(define e1  (map list
-                 '(     x  y  z ls + - * cons car cdr nil list add = nil? else)
-                 (list 10 20 30 (list 1 2) + - * cons car cdr '() list add = empty? #t)))
-
 ;;Returns the prodecure in env of the passed symbol sym
 ;;Returns an error if x is not a symbol in environment env
 
 (define lookup
   (lambda (sym env)
     (if (equal? (length env) 0)
-        (error "Symbol does not exist in the environment")
+        (error "Symbol " sym " does not exist in the environment")
         (if (symbol? sym)
             (if (equal? (car (car env)) sym)
                 (car (cdr (car env)))
@@ -42,42 +32,41 @@
 ;;If x is a number, return the number x
 ;;If x is a symbol, returns the value assigned to the symbol in environment env
 ;;If x is a list, applys evaluate to the list and returns that value
-
 (define evaluate
   (lambda (x env)
     (cond
-     ((number? x) x)
+     ((or (number? x) (procedure? x))  x)
      ((symbol? x) (lookup x env))
-     ((special-form? x) (esf x env))
-     ((list? x) (apply (evaluate (car x) env) (map (lambda (y) (evaluate y env)) (cdr x)))))))
+     ((special-form? x) (evaluate-special-form x env))
+     ((list? x) (apply (evaluate (evaluate (car x) env) env) (map (lambda (y) (evaluate y env)) (cdr x))))
+     )))
 
-(define esf
+;;Runs a special evaluation for multi-parameter special symbols
+;;Currently accepts symbols: 'if, 'cond
+(define evaluate-special-form
   (lambda (x env)
     (cond
       ((equal? (car x) 'if)
-          (if ((lookup (caadr x) env) (cadadr x) (car (cddadr x)))
-              (caddr x)
-              (cadddr x)))
+       (if (evaluate (cadr x) env)
+       (caddr x)
+       (evaluate (cadddr x) env)))
       ((equal? (car x) 'cond)
-          ;;(esf '(if ) env)
-       x)
-      (else (error "Passed non-special form")))
+       (condRec (cdr x) env))
+      (else (error "Passed non-special form"))
     
-    ))
+   )))
 
-(define condHelp
-  (lambda (para)
-    para
+;;Recursively evaluates the value of the first parameter if true
+;;If false, call again on rest of the list of conditions
+(define condRec
+  (lambda (para env)
+    (if (evaluate (caar para) env)
+        (evaluate (cadar para) env)
+        (condRec (cdr para) env))
     ))
 
 ;;Returns true if the first value of the passed list is one of the following special phrases:
-;;if, cond
-
+;;'if, 'cond
 (define special-form?
   (lambda (check)
     (or (equal? (car check) 'if) (equal? (car check) 'cond))))
-
-(define evaluate-special-form
-  (lambda (x y)
-    x
-    ))
