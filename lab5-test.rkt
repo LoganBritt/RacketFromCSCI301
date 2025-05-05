@@ -1,6 +1,7 @@
 #lang racket
 
 (require rackunit "eval.rkt")
+(provide add)
 
 (define add
   (lambda (a b)
@@ -68,6 +69,7 @@
                         (else 3)) e1)
        3)
 
+;; Lab 5 tests ;;
 (check =
        (evaluate '(let ((a 1) (b 2)) (+ a b)) e1)
        3)
