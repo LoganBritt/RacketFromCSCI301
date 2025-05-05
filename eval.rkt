@@ -89,9 +89,14 @@
 (define letAllowance
   (lambda (x env)
     (cond
-      ((greater? (length (car x)) 0) (letAllowance (cons (cdar x) (cdr x)) (cons (caar x) env)))
+      ((greater? (length (car x)) 0) (letAllowance (cons (cdar x) (cdr x)) (cons (evalInner (caar x) env) env)))
       (else (evaluate (cadr x) env)))))
+      ;(else env))))
 
+(define evalInner
+  (lambda (x env)
+    (list (car x) (evaluate (cadr x) env))
+    ))
 
 ;;Returns true if x > y
 (define greater?
