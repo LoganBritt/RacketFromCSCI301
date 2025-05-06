@@ -9,24 +9,27 @@
 ;; W01638650
 ;;
 ;; Evalutes an expression including special symbols that take multiple parameters
+;; Also allows for the evaluation of expressions with previously declared variables using let
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide lookup evaluate)
 (provide special-form? evaluate-special-form)
 
-(define add
-  (lambda (a b)
-    (cond ((number? a) (+ a b))
-          ((list? a) (append a b))
-          (else (error "unable to add" a b)))))
-
-(define e1  (map list
-                 '(     x  y  z + - * cons car cdr nil list add = else )
-                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
+;;
+;Below is added case environment and function 'add' for testing
+;;(define add
+;  (lambda (a b)
+;    (cond ((number? a) (+ a b))
+;          ((list? a) (append a b))
+;          (else (error "unable to add" a b)))))
+;
+;(define e1  (map list
+;                 '(     x  y  z + - * cons car cdr nil list add = else )
+;                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
+;;
 
 ;;Returns the prodecure in env of the passed symbol sym
 ;;Returns an error if x is not a symbol in environment env
-
 (define lookup
   (lambda (sym env)
     (if (equal? (length env) 0)
@@ -56,6 +59,7 @@
 (define evaluate-special-form
   (lambda (x env)
     (cond
+      ;((equal? x '(let ((x (+ 2 2)) (y x) (z (* 3 3))) (+ a x y z))) env)
       ((equal? (car x) 'if)
        (if (evaluate (cadr x) env)
        (caddr x)
@@ -63,7 +67,9 @@
       ((equal? (car x) 'cond)
        (condRec (cdr x) env))
       ((equal? (car x) 'let)
-       (letAllowance (cdr x) env))
+       (evaluate (caddr x) (addTo (evalDecs (cadr x) env) env)))
+        ;(fillEnv (cadr x) env))
+       ;(cadr x))
       (else (error "Passed non-special form"))
     
    )))
@@ -86,17 +92,27 @@
      (equal? (car check) 'cond)
      (equal? (car check) 'let))))
 
-(define letAllowance
+;;Returns an environment with the added variables in list x
+;;into the base environment env
+(define addTo
   (lambda (x env)
-    (cond
-      ((greater? (length (car x)) 0) (letAllowance (cons (cdar x) (cdr x)) (cons (evalInner (caar x) env) env)))
-      (else (evaluate (cadr x) env)))))
-      ;(else env))))
-
-(define evalInner
-  (lambda (x env)
-    (list (car x) (evaluate (cadr x) env))
+    (cond ((equal? (length x) 1)
+           (cons (car x) env))
+          (else
+           (cons (car x) (addTo (cdr x) env))))
     ))
+
+;;Returns the same list of variables post-evaluation
+(define evalDecs
+  (lambda (decs env)
+    (cond ((greater? (length decs) 0)
+           (cons (list (caar decs) (evaluate (cadar decs) env)) (evalDecs (cdr decs) env)))
+           (else decs))
+    ))
+
+
+
+
 
 ;;Returns true if x > y
 (define greater?
