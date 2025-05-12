@@ -3,13 +3,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CSCI 301, Spring 2025
 ;;
-;; Lab #5
+;; Lab #6
 ;;
 ;; Logan Britt
 ;; W01638650
 ;;
 ;; Evalutes an expression including special symbols that take multiple parameters
 ;; Also allows for the evaluation of expressions with previously declared variables using let
+;; Includes functionality for using the lambda function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide lookup evaluate)
@@ -17,15 +18,15 @@
 
 ;;
 ;Below is added case environment and function 'add' for testing
-;;(define add
-;  (lambda (a b)
-;    (cond ((number? a) (+ a b))
-;          ((list? a) (append a b))
-;          (else (error "unable to add" a b)))))
-;
-;(define e1  (map list
-;                 '(     x  y  z + - * cons car cdr nil list add = else )
-;                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
+(define add
+  (lambda (a b)
+    (cond ((number? a) (+ a b))
+          ((list? a) (append a b))
+          (else (error "unable to add" a b)))))
+
+(define e1  (map list
+                 '(     x  y  z + - * cons car cdr nil list add = else )
+                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
 ;;
 
 ;;Returns the prodecure in env of the passed symbol sym
@@ -55,11 +56,10 @@
      )))
 
 ;;Runs a special evaluation for multi-parameter special symbols
-;;Currently accepts symbols: 'if, 'cond. 'let
+;;Currently accepts symbols: 'if, 'cond, 'let
 (define evaluate-special-form
   (lambda (x env)
     (cond
-      ;((equal? x '(let ((x (+ 2 2)) (y x) (z (* 3 3))) (+ a x y z))) env)
       ((equal? (car x) 'if)
        (if (evaluate (cadr x) env)
        (caddr x)
@@ -68,8 +68,6 @@
        (condRec (cdr x) env))
       ((equal? (car x) 'let)
        (evaluate (caddr x) (addTo (evalDecs (cadr x) env) env)))
-        ;(fillEnv (cadr x) env))
-       ;(cadr x))
       (else (error "Passed non-special form"))
     
    )))
@@ -84,7 +82,7 @@
     ))
 
 ;;Returns true if the first value of the passed list is one of
-;;the following special phrases 'if, 'cond. 'let
+;;the following special phrases 'if, 'cond, 'let
 (define special-form?
   (lambda (check)
     (or
