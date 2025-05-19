@@ -3,7 +3,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CSCI 301, Spring 2025
 ;;
+<<<<<<< HEAD
 ;; Lab #7
+=======
+;; Lab #6
+>>>>>>> refs/remotes/origin/main
 ;;
 ;; Logan Britt
 ;; W01638650
@@ -18,6 +22,7 @@
 
 ;;
 ;Below is added case environment and function 'add' for testing
+<<<<<<< HEAD
 (define add
   (lambda (a b)
     (cond ((number? a) (+ a b))
@@ -45,6 +50,25 @@
 (lambda (clos) (mcdr (mcdr (mcdr clos)))))
 (define set-closure-env!
 (lambda (clos new-env) (set-mcar! (mcdr clos) new-env)))
+=======
+;(define add
+;  (lambda (a b)
+;    (cond ((number? a) (+ a b))
+;          ((list? a) (append a b))
+;          (else (error "unable to add" a b)))))
+;
+;(define e1  (map list
+;                 '(     x  y  z + - * cons car cdr nil list add = else )
+;                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
+;;
+
+;;Below is a group of specifics for closure usage
+(define closure (lambda (vars body env) (list 'closure vars body env)))
+(define closure? (lambda (clos) (and (pair? clos) (eq? (car clos) 'closure))))
+(define closure-vars cadr)
+(define closure-body caddr)
+(define closure-env cadddr)
+>>>>>>> refs/remotes/origin/main
 
 
 ;;Returns the prodecure in env of the passed symbol sym
