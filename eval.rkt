@@ -3,7 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CSCI 301, Spring 2025
 ;;
-;; Lab #6
+;; Lab #7
 ;;
 ;; Logan Britt
 ;; W01638650
@@ -29,6 +29,24 @@
                  (list 10 20 30 + - * cons car cdr '() list add = #t   )))
 ;;
 
+;;Below is a group of specifics for closure usage
+(define closure
+(lambda (vars body env)
+;(mcons ’closure (mcons env (mcons vars body)))))
+(mcons closure (mcons env (mcons vars body)))))
+(define closure?
+;(lambda (clos) (and (mpair? clos) (eq? (mcar clos) ’closure))))
+(lambda (clos) (and (mpair? clos) (eq? (mcar clos) closure))))
+(define closure-env
+(lambda (clos) (mcar (mcdr clos))))
+(define closure-vars
+(lambda (clos) (mcar (mcdr (mcdr clos)))))
+(define closure-body
+(lambda (clos) (mcdr (mcdr (mcdr clos)))))
+(define set-closure-env!
+(lambda (clos new-env) (set-mcar! (mcdr clos) new-env)))
+
+
 ;;Returns the prodecure in env of the passed symbol sym
 ;;Returns an error if x is not a symbol in environment env
 (define lookup
@@ -45,14 +63,22 @@
 
 ;;If x is a number, return the number x
 ;;If x is a symbol, returns the value assigned to the symbol in environment env
-;;If x is a list, applys evaluate to the list and returns that value for evaluation
+;;If x is a list, generates a closure if it's a lambda function and applies it as such
+;;or applys evaluate to the list and returns that value for evaluation
 (define evaluate
   (lambda (x env)
     (cond
      ((or (number? x) (procedure? x))  x)
      ((symbol? x) (lookup x env))
+     ((lambda? x) (closure (cadr x) (caddr x) env))
      ((special-form? x) (evaluate-special-form x env))
-     ((list? x) (apply (evaluate (evaluate (car x) env) env) (map (lambda (y) (evaluate y env)) (cdr x))))
+     ((list? x)
+       (let ((func (evaluate (car x) env))
+             (args (map (lambda (y) (evaluate y env)) (cdr x))))
+         (cond
+           ((procedure? func) (apply func args))
+           ((closure? func)   (apply-closure func args))
+           (else (error "Unknown Function Type" func)))))
      )))
 
 ;;Runs a special evaluation for multi-parameter special symbols
@@ -100,6 +126,7 @@
            (cons (car x) (addTo (cdr x) env))))
     ))
 
+;;Evaluates everything in the passed list with respect to the passed environment
 ;;Returns the same list of variables post-evaluation
 (define evalDecs
   (lambda (decs env)
@@ -108,8 +135,24 @@
            (else decs))
     ))
 
+;;Expands the environment in close with the variables in close
+;;Then computes the body of close with the expanded environment
+(define apply-closure
+  (lambda (close vals)
+    (let*
+        ((vars (closure-vars close))
+         (body (closure-body close))
+         (env (closure-env close))
+         (newEnv (addTo (map list vars vals) env)))
+      (evaluate body newEnv))
+    ))
 
-
+;;Returns true if the passed list begins with 'lambda
+(define lambda?
+  (lambda (x)
+    (and (list? x)
+         (eq? (car x) 'lambda)
+         (list? (cadr x)))))
 
 
 ;;Returns true if x > y
