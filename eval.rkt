@@ -24,19 +24,17 @@
           ((list? a) (append a b))
           (else (error "unable to add" a b)))))
 
-(define e1  (map list
-                 '(     x  y  z + - * cons car cdr nil list add = else )
-                 (list 10 20 30 + - * cons car cdr '() list add = #t   )))
+(define e1 (map list
+                 '(x y z + - * cons car cdr nil empty? = equal? < else  add list)
+             (list 2 4 6 + - * cons car cdr '() empty? = equal? < #t    add list)))
 ;;
 
 ;;Below is a group of specifics for closure usage
 (define closure
 (lambda (vars body env)
-;(mcons ’closure (mcons env (mcons vars body)))))
-(mcons closure (mcons env (mcons vars body)))))
+(mcons 'closure (mcons env (mcons vars body)))))
 (define closure?
-;(lambda (clos) (and (mpair? clos) (eq? (mcar clos) ’closure))))
-(lambda (clos) (and (mpair? clos) (eq? (mcar clos) closure))))
+(lambda (clos) (and (mpair? clos) (eq? (mcar clos) 'closure))))
 (define closure-env
 (lambda (clos) (mcar (mcdr clos))))
 (define closure-vars
@@ -81,7 +79,7 @@
      )))
 
 ;;Runs a special evaluation for multi-parameter special symbols
-;;Currently accepts symbols: 'if, 'cond, 'let
+;;Currently accepts symbols: 'if, 'cond, 'let, 'letrec
 (define evaluate-special-form
   (lambda (x env)
     (cond
@@ -93,6 +91,18 @@
        (condRec (cdr x) env))
       ((equal? (car x) 'let)
        (evaluate (caddr x) (addTo (evalDecs (cadr x) env) env)))
+      ((equal? (car x) 'letrec)
+         (let ((oldEnv env)
+               (miniEnv (evalDecs (cadr (list 'let (cadr x) (cddr x))) env)))
+           (let ((newEnv (addTo miniEnv oldEnv)))
+             (begin
+                 (set-closure-env! (cadar newEnv) newEnv)
+                 (evaluate (list 'let (cadr x) (cddr x)) newEnv)
+                 ;(list (list 'let (cadr x) (cddr x)) newEnv)
+             ))
+           
+           ))
+       ;(evaluate (list 'let (cadr x) (cddr x)) env))
       (else (error "Passed non-special form"))
     
    )))
@@ -107,13 +117,14 @@
     ))
 
 ;;Returns true if the first value of the passed list is one of
-;;the following special phrases 'if, 'cond, 'let
+;;the following special phrases 'if, 'cond, 'let, 'letrec
 (define special-form?
   (lambda (check)
     (or
      (equal? (car check) 'if)
      (equal? (car check) 'cond)
-     (equal? (car check) 'let))))
+     (equal? (car check) 'let)
+     (equal? (car check) 'letrec))))
 
 ;;Returns an environment with the added variables in list x
 ;;into the base environment env
