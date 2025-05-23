@@ -18,21 +18,21 @@
 
 ;;
 ;Below is added case environment and function 'add' for testing
-(define add
-  (lambda (a b)
-    (cond ((number? a) (+ a b))
-          ((list? a) (append a b))
-          (else (error "unable to add" a b)))))
+;(define add
+;  (lambda (a b)
+;    (cond ((number? a) (+ a b))
+;          ((list? a) (append a b))
+;          (else (error "unable to add" a b)))))
 
-(define e1 (map list
-                 '(x y z + - * cons car cdr nil empty? = equal? < else  add list)
-             (list 2 4 6 + - * cons car cdr '() empty? = equal? < #t    add list)))
+;(define e1 (map list
+;                 '(x y z + - * cons car cdr nil empty? = equal? < else  add list)
+;             (list 2 4 6 + - * cons car cdr '() empty? = equal? < #t    add list)))
 ;;
 
 ;;Below is a group of specifics for closure usage
 (define closure
-(lambda (vars body env)
-(mcons 'closure (mcons env (mcons vars body)))))
+  (lambda (vars body env)
+    (mcons 'closure (mcons env (mcons vars body)))))
 (define closure?
 (lambda (clos) (and (mpair? clos) (eq? (mcar clos) 'closure))))
 (define closure-env
@@ -85,27 +85,37 @@
     (cond
       ((equal? (car x) 'if)
        (if (evaluate (cadr x) env)
-       (caddr x)
-       (evaluate (cadddr x) env)))
+           (evaluate (caddr x) env)
+           (evaluate (cadddr x) env)))
       ((equal? (car x) 'cond)
        (condRec (cdr x) env))
       ((equal? (car x) 'let)
-       (evaluate (caddr x) (addTo (evalDecs (cadr x) env) env)))
+       (evaluate (caddr x)
+                 (addTo (evalDecs (cadr x) env) env)))
       ((equal? (car x) 'letrec)
-         (let ((oldEnv env)
-               (miniEnv (evalDecs (cadr (list 'let (cadr x) (cddr x))) env)))
-           (let ((newEnv (addTo miniEnv oldEnv)))
-             (begin
-                 (set-closure-env! (cadar newEnv) newEnv)
-                 (evaluate (list 'let (cadr x) (cddr x)) newEnv)
-                 ;(list (list 'let (cadr x) (cddr x)) newEnv)
-             ))
-           
-           ))
-       ;(evaluate (list 'let (cadr x) (cddr x)) env))
-      (else (error "Passed non-special form"))
-    
-   )))
+       (letrecActions x env))
+      (else (error "Passed non-special form")))))
+
+;;Handles all the lectrec initailization by building a new environment
+;;Then fixes the environments of it's added closures to the active environment
+(define letrecActions
+  (lambda (x env)
+    (let* ((oldEnv env)
+              (decs (cadr x))
+              (miniEnv (map (lambda (decl)
+                              (list (car decl)(evaluate (cadr decl) oldEnv))) decs))
+              (newEnv (addTo miniEnv oldEnv)))
+         (define (fixClosures lst)
+           (cond
+             ((null? lst) 'done)
+             ((closure? (cadr (car lst)))
+              (set-closure-env! (cadr (car lst)) newEnv)
+              (fixClosures (cdr lst)))
+             (else (fixClosures (cdr lst)))))
+         (fixClosures miniEnv)
+         (evaluate (caddr x) newEnv)))
+
+    )
 
 ;;Recursively evaluates the value of the first parameter if true
 ;;If false, call again on rest of the list of conditions
