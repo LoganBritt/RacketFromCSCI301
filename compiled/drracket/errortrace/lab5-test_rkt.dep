@@ -1,1 +1,0 @@
-("8.7" ta6le ("9fc12a87dcf56dc637a02de2dbb519b42f798584" . "0cd0c1e29fa64ac0abec3d0e352e29531717dfcc") #"/home/brittm2/Desktop/csci301/lab5/eval.rkt" (collects #"drracket" #"private" #"drracket-errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))
