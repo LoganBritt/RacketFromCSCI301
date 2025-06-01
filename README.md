@@ -1,6 +1,8 @@
 This file contains the Racket written during my time in CSCI301
 It includes:
+
 -Evaluator of listed methods and testing file
+
 -Parser for that evaluator
 
 Basically it takes a method that uses any environment of references and 
